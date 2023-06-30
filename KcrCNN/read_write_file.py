@@ -50,7 +50,7 @@ def openFile(filepath,targetNumber):
 # train_sequence,train_label=openFile('./Kcr_CV.fa',49048)
 
 #处理测试集
-test_sequence,test_label=openFile('./Kcr_IND.fa',36706)
+test_sequence,test_label=openFile('data/Kcr_IND.fa', 36706)
 
 #对上面处理的序列进行保存成csv的文件：
 def saveFile(filepath,sequence,label):

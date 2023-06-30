@@ -4,8 +4,8 @@
 # project:pytorch项目
 
 
-train_filepath='./Kcr_CV.fa'
-test_filepath='./Kcr_IND.fa'
+train_filepath= 'data/Kcr_CV.fa'
+test_filepath= 'data/Kcr_IND.fa'
 
 def read_data(filepath):
 
