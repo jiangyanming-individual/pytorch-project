@@ -21,7 +21,6 @@ print(res)
 """
 位置编码：
 """
-
 class PositionalEncoding(nn.Module):
 
     def __init__(self,num_hiddens,dropout,max_len=1000):

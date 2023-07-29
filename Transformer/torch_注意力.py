@@ -12,6 +12,18 @@ import numpy as np
 
 x=torch.tensor([10.0,20.0,30.0])
 
+#序列掩码：
+def sequence_mask(X, valid_len, value=0):
+    """Mask irrelevant entries in sequences.
+
+    Defined in :numref:`sec_seq2seq_decoder`"""
+    maxlen = X.size(1)
+    mask = torch.arange((maxlen), dtype=torch.float32,
+                        device=X.device)[None, :] < valid_len[:, None]
+    X[~mask] = value
+    return X
+
+
 
 #掩码信息： 掩码softmax的操作：
 def masked_softmax(X,valid_lens):
@@ -19,22 +31,21 @@ def masked_softmax(X,valid_lens):
     #valid_lens 有效词元长度：
     if valid_lens is None:
         return nn.functional.softmax(X,dim=-1) #dim=-1 和 dim =2 都是一行进行softmax
-
     else:
         shape=X.shape
         if valid_lens.dim() == 1:
             valid_lens=torch.repeat_interleave(valid_lens,shape[1])
         else:
             valid_lens=valid_lens.reshape(-1)
-        X=d2l.sequence_mask(X.reshape(-1,shape[-1]),valid_lens,value=-1e6)
+        X=sequence_mask(X.reshape(-1,shape[-1]),valid_lens,value=-1e6)
 
         return nn.functional.softmax(X.reshape(shape),dim=-1)
 
 
+#valid_len有效的输出为维度为(2,3);
 print(masked_softmax(torch.rand(2, 2, 4), torch.tensor([2, 3])))
 
-#加注意力：
-
+#(1):加性注意力：
 #valid_lens :有效长度
 class Addattention(nn.Module):
 
@@ -56,7 +67,6 @@ class Addattention(nn.Module):
         :param valid_lens:
         :return:
         """
-
         queries,keys=self.W_q(queries),self.W_k(keys)
 
         # print(queries.shape) # 2 *1 *8
@@ -69,7 +79,6 @@ class Addattention(nn.Module):
         features=queries.unsqueeze(2)+keys.unsqueeze(1) #在 dim=2 和dim =1分别增加一维；
         # print(features.shape) #torch.Size([2, 1, 10, 8])
         features=torch.tanh(features)
-
         # scores的形状：(batch_size，查询的个数，“键-值”对的个数)
         #(2,1,10)
         scores=self.W_v(features).squeeze(-1) #删除最后的那一个维度；
@@ -77,14 +86,13 @@ class Addattention(nn.Module):
         进行softmax操作：
         """
         self.attention_weights=masked_softmax(scores,valid_lens)
-        # values的形状：(batch_size，“键－值”对的个数，值的维度) (2,10,40)
+        # values的形状：(batch_size，“键－值”对的个数，值的维度) (2,10,4)
 
         #做两个矩阵的乘法：第一个矩阵的第三维和第二个矩阵的第二维是一样的要；
         return torch.bmm(self.dropout(self.attention_weights),values)
         """
          (2,1,10) * (2,10,4); ===> (2,1,4)
         """
-
 
 'batch_size=2  键值对为 10对；'
 queries,keys=torch.normal(0,1,(2,1,20)),torch.ones((2,10,2))
@@ -102,17 +110,15 @@ print(res)  #注意力汇聚输出的形状为（批量大小，查询的步数�
 
 
 
-#缩放点积注意力
+#(2)乘积===>缩放点积注意力
 class DotProductAttention(nn.Module):
 
     def __init__(self,dropout,**kwargs):
         super(DotProductAttention, self).__init__()
         self.dropout=nn.Dropout(dropout)
-
     """
     d是 query 和 key有相同的长度： 比较常用的计算注意力分数：
     """
-
     # queries的形状：(batch_size，查询的个数，d)
     # keys的形状：(batch_size，“键－值”对的个数，d)
     # values的形状：(batch_size，“键－值”对的个数，值的维度)

@@ -90,47 +90,46 @@ class CNN_Feature2d(nn.Module):
             score.append(y_.cpu().data)
         return torch.cat(score).numpy()[:, 0]
 
-def pep1(file):
-    try:
-        AA = '-ARNDCQEGHILKMFPSTWYV'
-        if os.path.exists(file) == False:
-            return False, None
-        
-        with open(file) as f:
-            record = f.read()
-        
-        records = record.split('>')[1:]
-        # print(records)
-        myFasta = []
-        for fasta in records:
-            array = fasta.split('\n')
-            name, sequence = array[0].split()[0], ''.join(array[1:]).upper()
-            myFasta.append([name, sequence])
-        
-        seqs = []
-        for fa in myFasta:
-            #替换非法字符：
-            name, sequence = fa[0], re.sub('[^ACDEFGHIKLMNPQRSTVWY]', '-', fa[1])
-            for i in range(len(sequence)):
-                if sequence[i] == 'K':
-                    myStr = ''
-                    #组合成K位点左右15的序列；
-                    for j in range(i-14, i+15):
-                        if j in range(len(sequence)):
-                            myStr += sequence[j]
-                        else:
-                            myStr += '-'
-                    #处理数据集：
-                    seqs.append([name+"_"+str(j+1), myStr, 0, 'testing'])
-        return True, seqs
-    except Exception as e:
-        return False, None
+# def pep1(file):
+#     try:
+#         AA = '-ARNDCQEGHILKMFPSTWYV'
+#         if os.path.exists(file) == False:
+#             return False, None
+#
+#         with open(file) as f:
+#             record = f.read()
+#
+#         records = record.split('>')[1:]
+#         # print(records)
+#         myFasta = []
+#         for fasta in records:
+#             array = fasta.split('\n')
+#             name, sequence = array[0].split()[0], ''.join(array[1:]).upper()
+#             myFasta.append([name, sequence])
+#
+#         seqs = []
+#         for fa in myFasta:
+#             #替换非法字符：
+#             name, sequence = fa[0], re.sub('[^ACDEFGHIKLMNPQRSTVWY]', '-', fa[1])
+#             for i in range(len(sequence)):
+#                 if sequence[i] == 'K':
+#                     myStr = ''
+#                     #组合成K位点左右15的序列；
+#                     for j in range(i-14, i+15):
+#                         if j in range(len(sequence)):
+#                             myStr += sequence[j]
+#                         else:
+#                             myStr += '-'
+#                     #处理数据集：
+#                     seqs.append([name+"_"+str(j+1), myStr, 0, 'testing'])
+#         return True, seqs
+#     except Exception as e:
+#         return False, None
 
 def encoding(samples):
     try:
         with open('./AAindex/AAindex_normalized.txt') as f:
             records = f.readlines()[1:]
-
         AA_aaindex = 'ARNDCQEGHILKMFPSTWYV'
         AAindex = []
         AAindexName = []
@@ -150,33 +149,34 @@ def encoding(samples):
             if len(tmpIndexNames) != 0:
                 AAindexName = tmpIndexNames
                 AAindex = tmpIndex
-        
+
+
         index = {}
         for i in range(len(AA_aaindex)):
             index[AA_aaindex[i]] = i
 
         blosum62 = {
-            'A': [4,  -1, -2, -2, 0,  -1, -1, 0, -2,  -1, -1, -1, -1, -2, -1, 1,  0,  -3, -2, 0],  # A
-            'R': [-1, 5,  0,  -2, -3, 1,  0,  -2, 0,  -3, -2, 2,  -1, -3, -2, -1, -1, -3, -2, -3], # R
-            'N': [-2, 0,  6,  1,  -3, 0,  0,  0,  1,  -3, -3, 0,  -2, -3, -2, 1,  0,  -4, -2, -3], # N
-            'D': [-2, -2, 1,  6,  -3, 0,  2,  -1, -1, -3, -4, -1, -3, -3, -1, 0,  -1, -4, -3, -3], # D
-            'C': [0,  -3, -3, -3, 9,  -3, -4, -3, -3, -1, -1, -3, -1, -2, -3, -1, -1, -2, -2, -1], # C
-            'Q': [-1, 1,  0,  0,  -3, 5,  2,  -2, 0,  -3, -2, 1,  0,  -3, -1, 0,  -1, -2, -1, -2], # Q
-            'E': [-1, 0,  0,  2,  -4, 2,  5,  -2, 0,  -3, -3, 1,  -2, -3, -1, 0,  -1, -3, -2, -2], # E
-            'G': [0,  -2, 0,  -1, -3, -2, -2, 6,  -2, -4, -4, -2, -3, -3, -2, 0,  -2, -2, -3, -3], # G
-            'H': [-2, 0,  1,  -1, -3, 0,  0,  -2, 8,  -3, -3, -1, -2, -1, -2, -1, -2, -2, 2,  -3], # H
-            'I': [-1, -3, -3, -3, -1, -3, -3, -4, -3, 4,  2,  -3, 1,  0,  -3, -2, -1, -3, -1, 3],  # I
-            'L': [-1, -2, -3, -4, -1, -2, -3, -4, -3, 2,  4,  -2, 2,  0,  -3, -2, -1, -2, -1, 1],  # L
-            'K': [-1, 2,  0,  -1, -3, 1,  1,  -2, -1, -3, -2, 5,  -1, -3, -1, 0,  -1, -3, -2, -2], # K
-            'M': [-1, -1, -2, -3, -1, 0,  -2, -3, -2, 1,  2,  -1, 5,  0,  -2, -1, -1, -1, -1, 1],  # M
-            'F': [-2, -3, -3, -3, -2, -3, -3, -3, -1, 0,  0,  -3, 0,  6,  -4, -2, -2, 1,  3,  -1], # F
-            'P': [-1, -2, -2, -1, -3, -1, -1, -2, -2, -3, -3, -1, -2, -4, 7,  -1, -1, -4, -3, -2], # P
-            'S': [1,  -1, 1,  0,  -1, 0,  0,  0,  -1, -2, -2, 0,  -1, -2, -1, 4,  1,  -3, -2, -2], # S
-            'T': [0,  -1, 0,  -1, -1, -1, -1, -2, -2, -1, -1, -1, -1, -2, -1, 1,  5,  -2, -2, 0],  # T
-            'W': [-3, -3, -4, -4, -2, -2, -3, -2, -2, -3, -2, -3, -1, 1,  -4, -3, -2, 11, 2,  -3], # W
-            'Y': [-2, -2, -2, -3, -2, -1, -2, -3, 2,  -1, -1, -2, -1, 3,  -3, -2, -2, 2,  7,  -1], # Y
-            'V': [0,  -3, -3, -3, -1, -2, -2, -3, -3, 3,  1,  -2, 1,  -1, -2, -2, 0,  -3, -1, 4],  # V
-            '-': [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],  # -
+            'A': [4, -1, -2, -2, 0, -1, -1, 0, -2, -1, -1, -1, -1, -2, -1, 1, 0, -3, -2, 0, 0],  # A
+            'R': [-1, 5, 0, -2, -3, 1, 0, -2, 0, -3, -2, 2, -1, -3, -2, -1, -1, -3, -2, -3, 0],  # R
+            'N': [-2, 0, 6, 1, -3, 0, 0, 0, 1, -3, -3, 0, -2, -3, -2, 1, 0, -4, -2, -3, 0],  # N
+            'D': [-2, -2, 1, 6, -3, 0, 2, -1, -1, -3, -4, -1, -3, -3, -1, 0, -1, -4, -3, -3, 0],  # D
+            'C': [0, -3, -3, -3, 9, -3, -4, -3, -3, -1, -1, -3, -1, -2, -3, -1, -1, -2, -2, -1, 0],  # C
+            'Q': [-1, 1, 0, 0, -3, 5, 2, -2, 0, -3, -2, 1, 0, -3, -1, 0, -1, -2, -1, -2, 0],  # Q
+            'E': [-1, 0, 0, 2, -4, 2, 5, -2, 0, -3, -3, 1, -2, -3, -1, 0, -1, -3, -2, -2, 0],  # E
+            'G': [0, -2, 0, -1, -3, -2, -2, 6, -2, -4, -4, -2, -3, -3, -2, 0, -2, -2, -3, -3, 0],  # G
+            'H': [-2, 0, 1, -1, -3, 0, 0, -2, 8, -3, -3, -1, -2, -1, -2, -1, -2, -2, 2, -3, 0],  # H
+            'I': [-1, -3, -3, -3, -1, -3, -3, -4, -3, 4, 2, -3, 1, 0, -3, -2, -1, -3, -1, 3, 0],  # I
+            'L': [-1, -2, -3, -4, -1, -2, -3, -4, -3, 2, 4, -2, 2, 0, -3, -2, -1, -2, -1, 1, 0],  # L
+            'K': [-1, 2, 0, -1, -3, 1, 1, -2, -1, -3, -2, 5, -1, -3, -1, 0, -1, -3, -2, -2, 0],  # K
+            'M': [-1, -1, -2, -3, -1, 0, -2, -3, -2, 1, 2, -1, 5, 0, -2, -1, -1, -1, -1, 1, 0],  # M
+            'F': [-2, -3, -3, -3, -2, -3, -3, -3, -1, 0, 0, -3, 0, 6, -4, -2, -2, 1, 3, -1, 0],  # F
+            'P': [-1, -2, -2, -1, -3, -1, -1, -2, -2, -3, -3, -1, -2, -4, 7, -1, -1, -4, -3, -2, 0],  # P
+            'S': [1, -1, 1, 0, -1, 0, 0, 0, -1, -2, -2, 0, -1, -2, -1, 4, 1, -3, -2, -2, 0],  # S
+            'T': [0, -1, 0, -1, -1, -1, -1, -2, -2, -1, -1, -1, -1, -2, -1, 1, 5, -2, -2, 0, 0],  # T
+            'W': [-3, -3, -4, -4, -2, -2, -3, -2, -2, -3, -2, -3, -1, 1, -4, -3, -2, 11, 2, -3, 0],  # W
+            'Y': [-2, -2, -2, -3, -2, -1, -2, -3, 2, -1, -1, -2, -1, 3, -3, -2, -2, 2, 7, -1, 0],  # Y
+            'V': [0, -3, -3, -3, -1, -2, -2, -3, -3, 3, 1, -2, 1, -1, -2, -2, 0, -3, -1, 4, 0],  # V
+            'X': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],  # -
         }
 
         for key in blosum62:
@@ -227,37 +227,42 @@ def encoding(samples):
         
         encodings = np.hstack((encoding_aaindex[:, 1:], encoding_binary[:, 2:], encoding_blosum[:, 2:]))
         return True, encodings.astype(np.float32)
+
     except Exception as e:
         return False, None
 
-def generateHtml(pd_result, file):
-    ftext = open('nhKCR_Pred.txt', 'w')
-    ftext.write('Samples\tPeptide\tScore\tPrediction\n')
-    for i in range(len(pd_result)):        
-        ftext.write('%s\t%s\t%.4f\t' %(pd_result.iloc[i, 0], pd_result.iloc[i, 1], float(pd_result.iloc[i, 2])))
-        score = float(pd_result.iloc[i, 2])
-        if score >= 0.447:            
-            ftext.write('Yes (high confidence)\n')
-        elif score >= 0.265:            
-            ftext.write('Yes (medium confidence)\n')
-        elif score >= 0.146:            
-            ftext.write('Yes (low confidence)\n')
-        else:            
-            ftext.write('No\n')    
-    ftext.close()
+# def generateHtml(pd_result, file):
+#     ftext = open('nhKCR_Pred.txt', 'w')
+#     ftext.write('Samples\tPeptide\tScore\tPrediction\n')
+#     for i in range(len(pd_result)):
+#         ftext.write('%s\t%s\t%.4f\t' %(pd_result.iloc[i, 0], pd_result.iloc[i, 1], float(pd_result.iloc[i, 2])))
+#         score = float(pd_result.iloc[i, 2])
+#         if score >= 0.447:
+#             ftext.write('Yes (high confidence)\n')
+#         elif score >= 0.265:
+#             ftext.write('Yes (medium confidence)\n')
+#         elif score >= 0.146:
+#             ftext.write('Yes (low confidence)\n')
+#         else:
+#             ftext.write('No\n')
+#     ftext.close()
 
 
 if __name__ == '__main__':    
-    workDir = './'
-    os.chdir(workDir)
+    # workDir = './'
+    # os.chdir(workDir)
     device = 'cpu'
 
-    error_msg = []
-    ok, samples = pep1(sys.argv[1])
+    # error_msg = []
+    # ok, samples = pep1(sys.argv[1])
     # ok, samples = pep1(input("LEVNNRIIEETLALKFENAAAGNKPEAVE"))
     pd_result = None
+    ok=True
+
     if ok:
+        samples=None
         ok_encoding, data_test = encoding(samples)
+
         if ok_encoding:            
             try:
                 ind_set = DealDataset(data_test.astype(np.float32))
@@ -274,11 +279,13 @@ if __name__ == '__main__':
                 
                 tmp_sample = np.array(samples)            
                 pd_result = pd.DataFrame(np.hstack((tmp_sample[:, 0:2], ind[:, 1].reshape((-1, 1)))), columns=['Samples', 'Peptide', 'Score'])
+
             except Exception as e:
                 pd_result = None
-        else:
-            error_msg.append('Feature encode error.')
-    else:
-        error_msg.append('Prepare sample failed.')
-
-    generateHtml(pd_result, 'result.php')
+            #
+    #     else:
+    #         error_msg.append('Feature encode error.')
+    # else:
+    #     error_msg.append('Prepare sample failed.')
+    #
+    # generateHtml(pd_result, 'result.php')

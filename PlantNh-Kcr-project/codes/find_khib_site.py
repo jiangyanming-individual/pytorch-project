@@ -30,7 +30,7 @@ wb.close()
 import re
 f1=open('peptide/rice-seeds-pos','w')
 f2=open('peptide/rice-seeds-neg','w')
-f=open('data/rice-seeds.fasta')
+f=open('data/rice-seeds.orginal_fasta')
 n=1;
 seq=''
 for line in f:
@@ -125,7 +125,7 @@ wb.close()
 
 f1=open('rice-leave-pos','w')
 f2=open('rice-leave-neg','w')
-f=open('data/rice-leave.fasta')
+f=open('data/rice-leave.orginal_fasta')
 n=1;
 seq=''
 for line in f:
@@ -212,7 +212,7 @@ wb.close()
 
 f1=open('rice-leave-pos','w')
 f2=open('rice-leave-neg','w')
-f=open('data/rice-leave.fasta')
+f=open('data/rice-leave.orginal_fasta')
 n=1;
 seq=''
 for line in f:
@@ -284,7 +284,7 @@ wb.close()
 
 f1=open('soybeanLeavePos','w')
 f2=open('soybeanLeaveNeg','w')
-f=open('data/soybean.fasta')
+f=open('data/soybean.orginal_fasta')
 n=1;
 seq=''
 for line in f:

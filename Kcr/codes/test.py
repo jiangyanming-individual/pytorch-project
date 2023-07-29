@@ -3,5 +3,5 @@
 # software: PyCharm
 # project:pytorch项目
 
-string="YDKILATKKNLDHVNKILKAKKLQRQARTGN"
+string="KKSVGDLTAADLEGKRVLVRADLNVPLDD"
 print(len(string))

@@ -11,8 +11,8 @@ from torch import nn
 from d2l import torch as d2l
 
 
-
 """
+前馈网络：
 基于位置的前馈网络对序列中的所有位置的表示进行变换时使用的是同一个多层感知机（MLP）
 """
 class PositionWiseFFN(nn.Module):
@@ -27,25 +27,16 @@ class PositionWiseFFN(nn.Module):
     def forward(self,X):
         return self.dense2(self.relu(self.dense1(X)))
 
-# 两层的感知机转换成形状为（批量大小，时间步数，ffn_num_outputs）的输出张量。
+# 两层的感知机转换成形状为（批量大小，时间步数，ffn_num_outputs）的输出张量
 
-
-ffn=PositionWiseFFN(4,4,8)
+ffn=PositionWiseFFN(4,4,8) #(inputs=4 ,num_hidden=4,outputs=8)
 ffn.eval()
-res=ffn(torch.ones((2,3,4))) #===>(2,3,8)
-# # print(res.shape)
-# print(res[0])
-# print(res[0].shape) #torch.Size([3, 8])
-#
-# print("================================================")
-# print(res[1])
-# print(res[1].shape)
+res=ffn(torch.ones((2,3,4))) #===>(2,3,4) =>(2,3,4)=>(2,3,8)
+
 
 """
-残差连接和层规范化
+残差连接和层规范层：
 """
-
-
 
 ln=nn.LayerNorm(2)
 bn=nn.BatchNorm1d(2)
@@ -71,7 +62,6 @@ add_norm.eval()
 add_norm_res=add_norm(torch.ones((2,3,4)),torch.ones((2,3,4))).shape
 # print("add_norm_res:",add_norm_res)
 
-
 #transformer编码块
 class EncoderBlock(nn.Module):
 
@@ -80,7 +70,6 @@ class EncoderBlock(nn.Module):
     """
     def __init__(self,key_size,query_size,value_size,num_hiddens,norm_shape,ffn_inputs,
                  ffn_hiddens,num_heads,dropout,use_bias=False,**kwargs):
-
 
         super(EncoderBlock, self).__init__()
         self.attention=d2l.MultiHeadAttention(key_size,query_size,value_size,num_hiddens,
@@ -198,13 +187,11 @@ class DecoderBlock(nn.Module):
         #输出：解码器多了一层addnorm
         return self.addnorm3(Z,self.ffn(Z)),state
 
-
 decoder_blk = DecoderBlock(24, 24, 24, 24, [100, 24], 24, 48, 8, 0.5, 0)
 decoder_blk.eval()
 X = torch.ones((2, 100, 24))
 state = [encoder_blk(X, valid_lens), valid_lens, [None]]
 print(decoder_blk(X,state)[0].shape)
-
 
 
 
@@ -243,7 +230,6 @@ class TransformerDecoder(d2l.AttentionDecoder):
             X,stat=blk(X,state)
 
             self._attention_weights[0][i]=blk.attention1.attention.attention_weights
-
             self._attention_weights[1][i]=blk.attention2.attention.attention_weights
 
         return self.dense(X),state
